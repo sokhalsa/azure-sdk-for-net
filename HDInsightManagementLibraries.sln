@@ -50,14 +50,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{14E8819C-A
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{49C00124-D7F2-47F9-8DCF-896CEE1EC5D2}"
 	ProjectSection(SolutionItems) = preProject
-		.nuget\HdInsightNuGet.targets = .nuget\HdInsightNuGet.targets
 		.nuget\NuGet.Config = .nuget\NuGet.Config
 		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{B642D0DC-6F60-4D91-8F9B-A77B8A06C2A0}"
 	ProjectSection(SolutionItems) = preProject
-		HDInsightLibraries.msbuild = HDInsightLibraries.msbuild
+		libraries.msbuild = libraries.msbuild
 		src\library.targets = src\library.targets
 	EndProjectSection
 EndProject
