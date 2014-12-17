@@ -19,6 +19,9 @@
     <SpecFlowTasksPath>$(SolutionDir)\packages\SpecFlow.1.9.0\tools\specflow.exe</SpecFlowTasksPath>
     <RestorePackages>true</RestorePackages>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+  </PropertyGroup>
   <Import Project="$(SolutionDir)\src\library.props" />
   <ItemGroup>
     <Reference Include="Microsoft.WindowsAzure.Common">
@@ -103,6 +106,7 @@
     <Compile Include="GenericRecordTests\AvroGenericsTests.cs" />
     <Compile Include="GenericRecordTests\SequentialGenericWritingReadingTests.cs" />
     <Compile Include="GenericRecordTests\GenericSerializerTests.cs" />
+    <Compile Include="GlobalSupressions.cs" />
     <Compile Include="IntegrationWithHiveTest\AvroIntegrationWithHiveConfigurations.cs" />
     <Compile Include="IntegrationWithHiveTest\IntegrationWithHiveTests.cs" />
     <Compile Include="MockExecutionContext.cs" />

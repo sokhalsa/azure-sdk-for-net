@@ -13,7 +13,10 @@
     <AssemblyName>Microsoft.Hadoop.Client</AssemblyName>
     <RestorePackages>true</RestorePackages>
   </PropertyGroup>
-    <Import Project="$(SolutionDir)\src\library.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+  </PropertyGroup>
+  <Import Project="$(SolutionDir)\src\library.props" />
   <ItemGroup>
     <Reference Include="Microsoft.WindowsAzure.Common">
       <HintPath>$(SolutionDir)\packages\Microsoft.WindowsAzure.Common.1.3.0\lib\portable-net45+sl50+wp8+wpa81+win\Microsoft.WindowsAzure.Common.dll</HintPath>
@@ -124,7 +127,7 @@
     <Compile Include="HadoopJobSubmissionPocoClient\IHadoopJobSubmissionPocoClient.cs" />
     <Compile Include="HadoopJobSubmissionPocoClient\IHadoopJobSubmissionPocoClientFactory.cs" />
     <Compile Include="YarnApplicationEntities\Enums.cs" />
-	<None Include="app.config" />
+    <None Include="app.config" />
     <None Include="HadoopJobSubmissionPocoClient\LocalHadoop\LocalHadoopJobSubmissionPocoClient.cs" />
     <None Include="HadoopJobSubmissionPocoClient\LocalHadoop\LocalHadoopJobSubmissionPocoClientFactory.cs" />
     <Compile Include="HadoopJobSubmissionPocoClient\RemoteHadoop\RemoteHadoopJobSubmissionPocoClient.cs" />

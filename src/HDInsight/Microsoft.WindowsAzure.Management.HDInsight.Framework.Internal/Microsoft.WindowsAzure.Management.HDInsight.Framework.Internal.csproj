@@ -13,6 +13,9 @@
     <AssemblyName>Microsoft.WindowsAzure.Management.HDInsight.Framework.Internal</AssemblyName>
     <RestorePackages>true</RestorePackages>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+  </PropertyGroup>
   <Import Project="$(SolutionDir)\src\library.props" />
   <ItemGroup>
     <Reference Include="Microsoft.WindowsAzure.Common">

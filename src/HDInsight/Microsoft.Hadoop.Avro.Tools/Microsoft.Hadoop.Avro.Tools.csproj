@@ -13,6 +13,9 @@
     <AssemblyName>Microsoft.Hadoop.Avro.Tools</AssemblyName>
     <RestorePackages>true</RestorePackages>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+  </PropertyGroup>
   <Import Project="$(SolutionDir)\src\library.props" />
   <PropertyGroup>
     <StartupObject>
