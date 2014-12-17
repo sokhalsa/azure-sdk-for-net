@@ -15,6 +15,9 @@
     <AssemblyName>Microsoft.Hadoop.Avro</AssemblyName>
     <RestorePackages>true</RestorePackages>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+  </PropertyGroup>
   <Import Project="$(SolutionDir)\src\library.props" />
   <ItemGroup>
     <Reference Include="Microsoft.WindowsAzure.Common">
@@ -43,6 +46,7 @@
     <Compile Include="Encoders\BufferedBinaryDecoder.cs" />
     <Compile Include="Encoders\BufferedBinaryEncoder.cs" />
     <Compile Include="GeneratedSerializer.cs" />
+    <Compile Include="GlobalSupressions.cs" />
     <Compile Include="IAvroSerializer.cs" />
     <Compile Include="IAvroSurrogate.cs" />
     <Compile Include="MemberSerializationInfo.cs" />
