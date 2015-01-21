@@ -429,6 +429,8 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
 
                 var cluster = clusterResult.ResultOfGetClusterCall;
 
+                SchemaVersionUtils.EnsureSchemaVersionSupportsResize(this.capabilities);
+
                 if (cluster.ClusterCapabilities == null || 
                     !cluster.ClusterCapabilities.Contains(ResizeCapabilityEnabled, StringComparer.OrdinalIgnoreCase))
                 {

@@ -539,7 +539,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
             newSize.ArgumentNotNull("newSize");
             location.ArgumentNotNull("location");
 
-            SchemaVersionUtils.EnsureSchemaVersionSupportsResize(this.capabilities.Value, this.canUseClustersContract.Value);
+            SchemaVersionUtils.EnsureSchemaVersionSupportsResize(this.capabilities.Value);
 
             var client = this.CreateClustersPocoClient(this.capabilities.Value);
 
