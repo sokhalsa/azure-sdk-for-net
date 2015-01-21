@@ -12,6 +12,9 @@
 // 
 // See the Apache Version 2.0 License for specific language governing
 // permissions and limitations under the License.
+
+using Microsoft.WindowsAzure.Management.HDInsight.Framework.Core.Library;
+
 namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoClient.ClustersResource
 {
     using System;
@@ -257,7 +260,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
                 if (CreateHasNewVMSizesSpecified(clusterCreateParameters) &&
                     !ClustersPocoClient.HasCorrectSchemaVersionForNewVMSizes(this.capabilities))
                 {
-                    throw new NotSupportedException("Your subscription does not support various VM sizes.");
+                    throw new NotSupportedException("Your subscription does not support new VM sizes.");
                 }
 
                 var rdfeCapabilitiesClient =
@@ -313,7 +316,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
                     "Medium", 
                     "Small", 
                     "ExtraSmall"
-                }, StringComparer.OrdinalIgnoreCase).Any();
+                }, StringComparer.OrdinalIgnoreCase).Any(ns => ns.IsNotNullOrEmpty());
         }
 
         /// <summary>
