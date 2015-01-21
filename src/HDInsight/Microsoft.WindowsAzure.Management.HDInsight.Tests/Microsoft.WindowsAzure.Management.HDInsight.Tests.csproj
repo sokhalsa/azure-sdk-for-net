@@ -41,11 +41,7 @@
     <Compile Include="ClientAbstractionTests\StorageAbstractionTests.cs" />
     <Compile Include="ClientAbstractionTests\StringLogWriter.cs" />
     <Compile Include="ClientAbstractionTests\VersionFinderClientTests.cs" />
-    <None Include="certs\sdkcli.cer">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Include="ClientAbstractionTests\JobPocoClientTests.cs" />
-    <Compile Include="ClientAbstractionTests\JobRestClientTests.cs" />
     <Compile Include="ClientAbstractionTests\LocationFinderClientTests.cs" />
     <Compile Include="ClientAbstractionTests\SubscriptionRegistrationTests.cs" />
     <Compile Include="ClientAbstractionTests\HttpClientTests.cs" />
@@ -57,7 +53,6 @@
     <Compile Include="ClustersTests\ClustersPocoClientTests.cs" />
     <Compile Include="ClustersTests\ClustersRestClientTests.cs" />
     <Compile Include="ClustersTests\ClustersTestsBase.cs" />
-    <Compile Include="Configuration\ConfigurationClientTests.cs" />
     <Compile Include="ConnectionCredentials\AlternativeEnvironmentIHDInsightSubscriptionCertificateCredentialsFactory.cs" />
     <Compile Include="Configuration\PayloadConverterTests.cs" />
     <Compile Include="ConnectionCredentials\AccessTokenTests.cs" />
@@ -113,6 +108,7 @@
     <Compile Include="HadoopClientTests\ApiSecurityPocoClientTests.cs" />
     <Compile Include="HadoopClientTests\PayloadConverterTests.cs" />
     <Compile Include="HadoopClientTests\RemoteHadoopRestLayer.cs" />
+    <Compile Include="SchemaVersionTests.cs" />
     <Compile Include="ServiceLocation\EchoServiceForTest.cs" />
     <Compile Include="ServiceLocation\IEchoServiceForTest.cs" />
     <Compile Include="ServiceLocation\ServiceLocationForTestRegistrar.cs" />
