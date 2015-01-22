@@ -32,11 +32,8 @@
   </metadata>
   <files>
     <file src="HDInsight\**\*.cs" target="src" />
-    <file src="..\binaries\Microsoft.HadoopAppliance.Client.dll" target="lib\net45" />
-    <file src="..\binaries\Microsoft.HadoopAppliance.Client.pdb" target="lib\net45" />
-    <file src="..\binaries\Microsoft.HadoopAppliance.Client.xml" target="lib\net45" />
-    <file src="..\binaries\net40\Microsoft.HadoopAppliance.Client.dll" target="lib\net40" />
-    <file src="..\binaries\net40\Microsoft.HadoopAppliance.Client.pdb" target="lib\net40" />
-    <file src="..\binaries\net40\Microsoft.HadoopAppliance.Client.xml" target="lib\net40" />
+    <file src="..\binaries\net45\Microsoft.HadoopAppliance.Client.dll" target="lib\net45" />
+    <file src="..\binaries\net45\Microsoft.HadoopAppliance.Client.pdb" target="lib\net45" />
+    <file src="..\binaries\net45\Microsoft.HadoopAppliance.Client.xml" target="lib\net45" />
   </files>
 </package>
