@@ -6,7 +6,6 @@
     -->
     <SdkNuGetPackage Include="Microsoft.HadoopAppliance.Client">
       <PackageVersion>1.4.3</PackageVersion>
-
       <Folder>$(MSBuildThisFileDirectory)</Folder>
     </SdkNuGetPackage>
   </ItemGroup>
