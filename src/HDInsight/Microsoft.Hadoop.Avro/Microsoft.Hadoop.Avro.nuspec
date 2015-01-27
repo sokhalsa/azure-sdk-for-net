@@ -20,10 +20,6 @@
         <reference file="Microsoft.Hadoop.Avro.dll" />
         <reference file="Microsoft.Hadoop.Avro.xml" />
       </group>
-      <group targetFramework="net40">
-        <reference file="Microsoft.Hadoop.Avro.dll" />
-        <reference file="Microsoft.Hadoop.Avro.xml" />
-      </group>
     </references>
     <dependencies>
       <dependency id="Newtonsoft.Json" version="6.0.4" />

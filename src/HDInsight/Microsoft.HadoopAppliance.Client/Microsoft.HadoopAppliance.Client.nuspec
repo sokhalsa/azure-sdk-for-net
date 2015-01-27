@@ -20,10 +20,6 @@
         <reference file="Microsoft.HadoopAppliance.Client.dll" />
         <reference file="Microsoft.HadoopAppliance.Client.xml" />
       </group>
-      <group targetFramework="net40">
-        <reference file="Microsoft.HadoopAppliance.Client.dll" />
-        <reference file="Microsoft.HadoopAppliance.Client.xml" />
-      </group>
     </references>
     <dependencies>
       <dependency id="Microsoft.Hadoop.Client" />
