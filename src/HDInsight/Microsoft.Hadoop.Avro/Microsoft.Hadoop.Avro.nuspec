@@ -20,10 +20,6 @@
         <reference file="Microsoft.Hadoop.Avro.dll" />
         <reference file="Microsoft.Hadoop.Avro.xml" />
       </group>
-      <group targetFramework="net40">
-        <reference file="Microsoft.Hadoop.Avro.dll" />
-        <reference file="Microsoft.Hadoop.Avro.xml" />
-      </group>
     </references>
     <dependencies>
       <dependency id="Newtonsoft.Json" version="6.0.4" />
@@ -31,11 +27,8 @@
   </metadata>
   <files>
     <file src="HDInsight\**\*.cs" target="src" />
-    <file src="..\binaries\Microsoft.Hadoop.Avro.dll" target="lib\net45" />
-    <file src="..\binaries\Microsoft.Hadoop.Avro.pdb" target="lib\net45" />
-    <file src="..\binaries\Microsoft.Hadoop.Avro.xml" target="lib\net45" />
-    <file src="..\binaries\net40\Microsoft.Hadoop.Avro.dll" target="lib\net40" />
-    <file src="..\binaries\net40\Microsoft.Hadoop.Avro.pdb" target="lib\net40" />
-    <file src="..\binaries\net40\Microsoft.Hadoop.Avro.xml" target="lib\net40" />
+    <file src="..\binaries\net45\Microsoft.Hadoop.Avro.dll" target="lib\net45" />
+    <file src="..\binaries\net45\Microsoft.Hadoop.Avro.pdb" target="lib\net45" />
+    <file src="..\binaries\net45\Microsoft.Hadoop.Avro.xml" target="lib\net45" />
   </files>
 </package>
