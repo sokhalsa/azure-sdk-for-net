@@ -6,7 +6,6 @@
     -->
     <SdkNuGetPackage Include="Microsoft.WindowsAzure.Management.HDInsight">
       <PackageVersion>1.4.2</PackageVersion>
-
       <Folder>$(MSBuildThisFileDirectory)</Folder>
     </SdkNuGetPackage>
   </ItemGroup>
