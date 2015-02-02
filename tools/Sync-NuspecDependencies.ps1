@@ -26,23 +26,31 @@ function SyncNuspecFile([string]$FolderPath)
         } else {
 		    [xml]$nuproj = Get-Content (Get-Item $FolderPath\*.nuget.proj | select -First 1)
         }
-
+		echo $nuproj
         $assemblyContent = Get-Content $FolderPath\Properties\AssemblyInfo.cs
-
         #Updating AssemblyFileVersion
 		$packageVersion = $nuproj.Project.ItemGroup.SdkNuGetPackage.PackageVersion
+
         $packageVersion = ([regex]"[\d\.]+").Match($packageVersion).Value
+		
         $assemblyContent = $assemblyContent -replace "\[assembly\:\s*AssemblyFileVersion\s*\(\s*`"[\d\.\s]+`"\s*\)\s*\]","[assembly: AssemblyFileVersion(`"$packageVersion.0`")]"
 
         #Updating AssemblyVersion
-        $majorVersion = ([regex]"\d+").Match($packageVersion).Captures[0].Value
-        $assemblyVersion = "$majorVersion.0.0.0"
-        if ($majorVersion -eq "0") {
-            $assemblyVersion = "0.9.0.0"
-        }
-        $assemblyContent = $assemblyContent -replace "\[assembly\:\s*AssemblyVersion\s*\(\s*`"[\d\.\s]+","[assembly: AssemblyVersion(`"$assemblyVersion"
-
-        Set-Content -Path $FolderPath\Properties\AssemblyInfo.cs -Value $assemblyContent
+		if ($folderName -ne "HDInsight"){
+		echo "not HDInsight"
+		echo $folderName
+			$majorVersion = ([regex]"\d+").Match($packageVersion).Captures[0].Value
+			$assemblyVersion = "$majorVersion.0.0.0"
+			if ($majorVersion -eq "0") {
+				$assemblyVersion = "0.9.0.0"
+			}
+			$assemblyContent = $assemblyContent -replace "\[assembly\:\s*AssemblyVersion\s*\(\s*`"[\d\.\s]+","[assembly: AssemblyVersion(`"$assemblyVersion"
+			Set-Content -Path $FolderPath\Properties\AssemblyInfo.cs -Value $assemblyContent
+		}
+		else {
+		echo "ELSE"
+		echo $folderName
+		}
 	}
 
 	# Check files exist
