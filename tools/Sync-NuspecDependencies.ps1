@@ -28,17 +28,16 @@ function SyncNuspecFile([string]$FolderPath)
         }
 		echo $nuproj
         $assemblyContent = Get-Content $FolderPath\Properties\AssemblyInfo.cs
-        #Updating AssemblyFileVersion
-		$packageVersion = $nuproj.Project.ItemGroup.SdkNuGetPackage.PackageVersion
-
-        $packageVersion = ([regex]"[\d\.]+").Match($packageVersion).Value
 		
-        $assemblyContent = $assemblyContent -replace "\[assembly\:\s*AssemblyFileVersion\s*\(\s*`"[\d\.\s]+`"\s*\)\s*\]","[assembly: AssemblyFileVersion(`"$packageVersion.0`")]"
-
-        #Updating AssemblyVersion
 		if ($folderName -ne "HDInsight"){
-		echo "not HDInsight"
-		echo $folderName
+			#Updating AssemblyFileVersion
+			$packageVersion = $nuproj.Project.ItemGroup.SdkNuGetPackage.PackageVersion
+
+			$packageVersion = ([regex]"[\d\.]+").Match($packageVersion).Value
+			
+			$assemblyContent = $assemblyContent -replace "\[assembly\:\s*AssemblyFileVersion\s*\(\s*`"[\d\.\s]+`"\s*\)\s*\]","[assembly: AssemblyFileVersion(`"$packageVersion.0`")]"
+
+			#Updating AssemblyVersion
 			$majorVersion = ([regex]"\d+").Match($packageVersion).Captures[0].Value
 			$assemblyVersion = "$majorVersion.0.0.0"
 			if ($majorVersion -eq "0") {
