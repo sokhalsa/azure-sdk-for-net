@@ -29,7 +29,7 @@ function SyncNuspecFile([string]$FolderPath)
 		echo $nuproj
         $assemblyContent = Get-Content $FolderPath\Properties\AssemblyInfo.cs
 		
-		if ($folderName -ne "HDInsight"){
+		if ($folderName -ne "Microsoft.Hadoop.Client"){
 			#Updating AssemblyFileVersion
 			$packageVersion = $nuproj.Project.ItemGroup.SdkNuGetPackage.PackageVersion
 
