@@ -26,7 +26,7 @@ function SyncNuspecFile([string]$FolderPath)
         } else {
 		    [xml]$nuproj = Get-Content (Get-Item $FolderPath\*.nuget.proj | select -First 1)
         }
-		echo $nuproj
+		
         $assemblyContent = Get-Content $FolderPath\Properties\AssemblyInfo.cs
 		
 		if (($folderName -ne "Microsoft.Hadoop.Client") -and ($folderName -ne "Microsoft.Hadoop.Avro") -and ($folderName -ne "Microsoft.HadoopAppliance.Client") -and ($folderName -ne "Microsoft.WindowsAzure.Management.HDInsight")){
