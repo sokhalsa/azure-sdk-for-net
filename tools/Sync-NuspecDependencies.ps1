@@ -28,21 +28,24 @@ function SyncNuspecFile([string]$FolderPath)
         }
 
         $assemblyContent = Get-Content $FolderPath\Properties\AssemblyInfo.cs
+		
+		if (($folderName -ne "Microsoft.Hadoop.Client") -and ($folderName -ne "Microsoft.Hadoop.Avro") -and ($folderName -ne "Microsoft.HadoopAppliance.Client") -and ($folderName -ne "Microsoft.WindowsAzure.Management.HDInsight")){
+			#Updating AssemblyFileVersion
+			$packageVersion = $nuproj.Project.ItemGroup.SdkNuGetPackage.PackageVersion
 
-        #Updating AssemblyFileVersion
-		$packageVersion = $nuproj.Project.ItemGroup.SdkNuGetPackage.PackageVersion
-        $packageVersion = ([regex]"[\d\.]+").Match($packageVersion).Value
-        $assemblyContent = $assemblyContent -replace "\[assembly\:\s*AssemblyFileVersion\s*\(\s*`"[\d\.\s]+`"\s*\)\s*\]","[assembly: AssemblyFileVersion(`"$packageVersion.0`")]"
+			$packageVersion = ([regex]"[\d\.]+").Match($packageVersion).Value
+			
+			$assemblyContent = $assemblyContent -replace "\[assembly\:\s*AssemblyFileVersion\s*\(\s*`"[\d\.\s]+`"\s*\)\s*\]","[assembly: AssemblyFileVersion(`"$packageVersion.0`")]"
 
-        #Updating AssemblyVersion
-        $majorVersion = ([regex]"\d+").Match($packageVersion).Captures[0].Value
-        $assemblyVersion = "$majorVersion.0.0.0"
-        if ($majorVersion -eq "0") {
-            $assemblyVersion = "0.9.0.0"
-        }
-        $assemblyContent = $assemblyContent -replace "\[assembly\:\s*AssemblyVersion\s*\(\s*`"[\d\.\s]+","[assembly: AssemblyVersion(`"$assemblyVersion"
-
-        Set-Content -Path $FolderPath\Properties\AssemblyInfo.cs -Value $assemblyContent
+			#Updating AssemblyVersion
+			$majorVersion = ([regex]"\d+").Match($packageVersion).Captures[0].Value
+			$assemblyVersion = "$majorVersion.0.0.0"
+			if ($majorVersion -eq "0") {
+				$assemblyVersion = "0.9.0.0"
+			}
+			$assemblyContent = $assemblyContent -replace "\[assembly\:\s*AssemblyVersion\s*\(\s*`"[\d\.\s]+","[assembly: AssemblyVersion(`"$assemblyVersion"
+			Set-Content -Path $FolderPath\Properties\AssemblyInfo.cs -Value $assemblyContent
+		}
 	}
 
 	# Check files exist
