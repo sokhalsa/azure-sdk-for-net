@@ -57,8 +57,6 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
         ///     Default HDInsight version.
         /// </summary>
         internal const string DEFAULTHDINSIGHTVERSION = "default";
-        internal const string ClustersContractCapabilityVersion1 = "CAPABILITY_FEATURE_CLUSTERS_CONTRACT_1_SDK";
-        internal static string ClustersContractCapabilityVersion2 = "CAPABILITY_FEATURE_CLUSTERS_CONTRACT_2_SDK";
         internal const string ClusterAlreadyExistsError = "The condition specified by the ETag is not satisfied.";
 
         private IHDInsightSubscriptionCredentials credentials;
@@ -224,8 +222,20 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
             }
         }
         
-        /// <inheritdoc />
         public async Task<ClusterDetails> CreateClusterAsync(ClusterCreateParameters clusterCreateParameters)
+        {
+            if (clusterCreateParameters == null)
+            {
+                throw new ArgumentNullException("clusterCreateParameters");
+            }
+
+            var createParamsV2 = new ClusterCreateParametersV2(clusterCreateParameters);
+
+            return await CreateClusterAsync(createParamsV2);
+        }
+
+        /// <inheritdoc />
+        public async Task<ClusterDetails> CreateClusterAsync(ClusterCreateParametersV2 clusterCreateParameters)
         {
             if (clusterCreateParameters == null)
             {
@@ -306,7 +316,9 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
             MessageId = "Microsoft.WindowsAzure.Management.HDInsight.Logging.LogProviderExtensions.LogMessage(Microsoft.WindowsAzure.Management.HDInsight.Logging.ILogProvider,System.String,Microsoft.WindowsAzure.Management.HDInsight.Logging.Severity,Microsoft.WindowsAzure.Management.HDInsight.Logging.Verbosity)")]
         private bool CanUseClustersContract()
         {
-            bool retval = this.capabilities.Value.Contains(ClustersContractCapabilityVersion1);
+            string clustersCapability;
+            SchemaVersionUtils.SupportedSchemaVersions.TryGetValue(1, out clustersCapability);
+            bool retval = this.capabilities.Value.Contains(clustersCapability);
             this.LogMessage(string.Format(CultureInfo.InvariantCulture, "Clusters resource type is enabled '{0}'", retval), Severity.Critical, Verbosity.Detailed);
             
             return retval;
@@ -355,7 +367,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
             return this.CreateContainersPocoClient();
         }
 
-        private static void HandleCreateHttpLayerException(ClusterCreateParameters clusterCreateParameters, HttpLayerException e)
+        private static void HandleCreateHttpLayerException(ClusterCreateParametersV2 clusterCreateParameters, HttpLayerException e)
         {
             if (e.RequestContent.Contains(ClusterAlreadyExistsError) && e.RequestStatusCode == HttpStatusCode.BadRequest)
             {
@@ -505,11 +517,21 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
         /// <inheritdoc />
         public ClusterDetails CreateCluster(ClusterCreateParameters cluster)
         {
-            return this.CreateClusterAsync(cluster).WaitForResult();
+            return this.CreateClusterAsync(new ClusterCreateParametersV2(cluster)).WaitForResult();
         }
 
         /// <inheritdoc />
         public ClusterDetails CreateCluster(ClusterCreateParameters cluster, TimeSpan timeout)
+        {
+            return this.CreateClusterAsync(new ClusterCreateParametersV2(cluster)).WaitForResult(timeout);
+        }
+
+        public ClusterDetails CreateCluster(ClusterCreateParametersV2 cluster)
+        {
+            return this.CreateClusterAsync(cluster).WaitForResult();
+        }
+
+        public ClusterDetails CreateCluster(ClusterCreateParametersV2 cluster, TimeSpan timeout)
         {
             return this.CreateClusterAsync(cluster).WaitForResult(timeout);
         }
@@ -539,17 +561,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
             newSize.ArgumentNotNull("newSize");
             location.ArgumentNotNull("location");
 
-            if (!this.canUseClustersContract.Value)
-            {
-                throw new NotSupportedException(
-                    string.Format(CultureInfo.CurrentCulture, "This subscription is missing the capability {0} and therefore does not support a change cluster size operation.", ClustersContractCapabilityVersion1));
-            }
-
-            if (!this.capabilities.Value.Contains(ClustersContractCapabilityVersion2))
-            {
-                throw new NotSupportedException(
-                    string.Format(CultureInfo.CurrentCulture, "This subscription is missing the capability {0} and therefore does not support a change cluster size operation.", ClustersContractCapabilityVersion2));
-            }
+            SchemaVersionUtils.EnsureSchemaVersionSupportsResize(this.capabilities.Value);
 
             var client = this.CreateClustersPocoClient(this.capabilities.Value);
 
@@ -657,7 +669,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
             this.AssertSupportedVersion(cluster.VersionNumber);
         }
 
-        private async Task ValidateClusterVersion(ClusterCreateParameters cluster)
+        private async Task ValidateClusterVersion(ClusterCreateParametersV2 cluster)
         {
             var overrideHandlers = ServiceLocator.Instance.Locate<IHDInsightClusterOverrideManager>().GetHandlers(this.credentials, this.Context, this.IgnoreSslErrors);
 
@@ -689,6 +701,22 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
                     throw new InvalidOperationException(
                         string.Format("Cannot create a customized cluster with version '{0}'. Customized clusters only supported after version 3.0", cluster.Version));
                 }
+
+                // Various VM sizes only supported starting with version 3.1
+                if (version.CompareTo(new Version("3.1")) < 0 && createHasNewVMSizesSpecified(cluster))
+                {
+                    throw new InvalidOperationException(
+                        string.Format(
+                            "Cannot use various VM sizes with cluster version '{0}'. Custom VM sizes are only supported for cluster versions 3.1 and above.",
+                            cluster.Version));
+                }
+
+                // Spark cluster only supported after version 3.2
+                if (version.CompareTo(new Version("3.2")) < 0 && cluster.ClusterType == ClusterType.Spark)
+                {
+                    throw new InvalidOperationException(
+                        string.Format("Cannot create a Spark cluster with version '{0}'. Spark cluster only supported after version 3.2", cluster.Version));
+                }
             }
             else
             {
@@ -719,6 +747,24 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
                             HDInsightSDKSupportedVersions.MinVersion,
                             HDInsightSDKSupportedVersions.MaxVersion));
             }
+        }
+
+        private bool createHasNewVMSizesSpecified(ClusterCreateParametersV2 clusterCreateParameters)
+        {
+            const string ExtraLarge = "ExtraLarge";
+            const string Large = "Large";
+
+            if (!new[] {Large, ExtraLarge}.Contains(clusterCreateParameters.HeadNodeSize, StringComparer.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (!clusterCreateParameters.DataNodeSize.Equals(Large))
+            {
+                return true;
+            }
+
+            return clusterCreateParameters.ZookeeperNodeSize != null;
         }
     }
 }
