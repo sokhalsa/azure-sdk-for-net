@@ -12,6 +12,9 @@
 // 
 // See the Apache Version 2.0 License for specific language governing
 // permissions and limitations under the License.
+
+using Microsoft.WindowsAzure.Management.HDInsight.Framework.Core.Library;
+
 namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoClient.ClustersResource
 {
     using System;
@@ -42,10 +45,8 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
         internal const string ClustersResourceType = "CLUSTERS";
         private readonly bool ignoreSslErrors;
         private const string ResourceAlreadyExists = "The condition specified by the ETag is not satisfied.";
-        private const string ClustersContractCapabilityPattern = @"CAPABILITY_FEATURE_CLUSTERS_CONTRACT_(\d+)_SDK";
-        private const string ClusterConfigActionCapabilitityName = "CAPABILITY_FEATURE_POWERSHELL_SCRIPT_ACTION_SDK";
-        private static readonly Regex ClustersContractCapabilityRegex = new Regex(ClustersContractCapabilityPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
         internal const string ResizeCapabilityEnabled = "ResizeEnabled";
+        public const string ClusterConfigActionCapabilitityName = "CAPABILITY_FEATURE_POWERSHELL_SCRIPT_ACTION_SDK";
         private const string ResizeRoleAction = "Resize";
 
         /// <inheritdoc />
@@ -65,7 +66,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
         }
 
         internal ClustersPocoClient(IHDInsightSubscriptionCredentials credentials, bool ignoreSslErrors, IAbstractionContext context, List<string> capabilities)
-            : this(credentials, ignoreSslErrors, context, capabilities, ServiceLocator.Instance.Locate<IRdfeClustersResourceRestClientFactory>().Create(credentials, context, ignoreSslErrors, GetSchemaVersion(capabilities)))
+            : this(credentials, ignoreSslErrors, context, capabilities, ServiceLocator.Instance.Locate<IRdfeClustersResourceRestClientFactory>().Create(credentials, context, ignoreSslErrors, SchemaVersionUtils.GetSchemaVersion(capabilities)))
         {
         }
 
@@ -191,15 +192,31 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
 
         internal static bool HasCorrectSchemaVersionForConfigAction(IEnumerable<string> capabilities)
         {
-            return capabilities.Contains(HDInsightClient.ClustersContractCapabilityVersion2, StringComparer.OrdinalIgnoreCase);
+            string resizeCapability;
+            SchemaVersionUtils.SupportedSchemaVersions.TryGetValue(2, out resizeCapability);
+            if (resizeCapability == null)
+            {
+                return false;
+            }
+            return capabilities.Contains(resizeCapability, StringComparer.OrdinalIgnoreCase);
         }
 
+        internal static bool HasCorrectSchemaVersionForNewVMSizes(IEnumerable<string> capabilities)
+        {
+            string vmSizesCapability;
+            SchemaVersionUtils.SupportedSchemaVersions.TryGetValue(3, out vmSizesCapability);
+            if (vmSizesCapability == null)
+            {
+                return false;
+            }
+            return capabilities.Contains(vmSizesCapability, StringComparer.OrdinalIgnoreCase);
+        }
         /// <summary>
         /// Creates the container.
         /// </summary>
         /// <param name="clusterCreateParameters">The cluster create parameters.</param>
         /// <returns>A task.</returns>
-        public async Task CreateContainer(HDInsight.ClusterCreateParameters clusterCreateParameters)
+        public async Task CreateContainer(HDInsight.ClusterCreateParametersV2 clusterCreateParameters)
         {
             if (clusterCreateParameters == null)
             {
@@ -220,6 +237,19 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
             {
                 throw new ArgumentException("clusterCreateParameters.ClusterSizeInNodes must be > 0");
             }
+
+            //allow zookeeper to be specified only for Hbase and Storm clusters
+            if (clusterCreateParameters.ZookeeperNodeSize != null)
+            {
+                if (clusterCreateParameters.ClusterType != ClusterType.HBase &&
+                    clusterCreateParameters.ClusterType != ClusterType.Storm)
+                {
+                    throw new ArgumentException(
+                        string.Format("clusterCreateParameters.ZookeeperNodeSize must be null for {0} clusters.",
+                        clusterCreateParameters.ClusterType));
+                }
+            }
+            
             try
             {
                 //Validate 
@@ -230,8 +260,8 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
                 {
                     this.LogMessage("Validating parameters for config actions.", Severity.Informational, Verbosity.Detailed);
 
-                    if (!ClustersPocoClient.HasClusterConfigActionCapability(this.capabilities) ||
-                        !ClustersPocoClient.HasCorrectSchemaVersionForConfigAction(this.capabilities))
+                    if (!HasClusterConfigActionCapability(this.capabilities) ||
+                        !HasCorrectSchemaVersionForConfigAction(this.capabilities))
                     {
                         throw new NotSupportedException("Your subscription does not support config actions.");
                     }
@@ -240,6 +270,13 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
 
                     // Validates that the config actions' Uris are downloadable.
                     UriEndpointValidator.ValidateAndResolveConfigActionEndpointUris(clusterCreateParameters);
+                }
+
+                //Validate if new vm sizes are used and if the schema is on.
+                if (CreateHasNewVMSizesSpecified(clusterCreateParameters) &&
+                    !ClustersPocoClient.HasCorrectSchemaVersionForNewVMSizes(this.capabilities))
+                {
+                    throw new NotSupportedException("Your subscription does not support new VM sizes.");
                 }
 
                 var rdfeCapabilitiesClient =
@@ -261,7 +298,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
                 await this.CreateCloudServiceAsyncIfNotExists(clusterCreateParameters.Location);
 
                 var wireCreateParameters = PayloadConverterClusters.CreateWireClusterCreateParametersFromUserType(clusterCreateParameters);
-                var rdfeResourceInputFromWireInput = PayloadConverterClusters.CreateRdfeResourceInputFromWireInput(wireCreateParameters, GetSchemaVersion(this.capabilities));
+                var rdfeResourceInputFromWireInput = PayloadConverterClusters.CreateRdfeResourceInputFromWireInput(wireCreateParameters, SchemaVersionUtils.GetSchemaVersion(this.capabilities));
 
                 await
                     this.rdfeClustersRestClient.CreateCluster(
@@ -277,6 +314,25 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
                 string content = iEx.Response.Content != null ? iEx.Response.Content.ReadAsStringAsync().Result : string.Empty;
                 throw new HttpLayerException(iEx.ReceivedStatusCode, content);
             }
+        }
+
+        private static bool CreateHasNewVMSizesSpecified(ClusterCreateParametersV2 clusterCreateParameters)
+        {
+            return new[]
+            {
+                clusterCreateParameters.HeadNodeSize, 
+                clusterCreateParameters.DataNodeSize, 
+                clusterCreateParameters.ZookeeperNodeSize
+            }
+            .Except(
+                new[]
+                {
+                    "ExtraLarge", 
+                    "Large", 
+                    "Medium", 
+                    "Small", 
+                    "ExtraSmall"
+                }, StringComparer.OrdinalIgnoreCase).Any(ns => ns.IsNotNullOrEmpty());
         }
 
         /// <summary>
@@ -418,18 +474,14 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
                 throw new ArgumentOutOfRangeException("newSize", "The new node count must be at least 1.");
             }
 
-            if (!this.capabilities.Contains(HDInsightClient.ClustersContractCapabilityVersion2))
-            {
-                throw new NotSupportedException(
-                    string.Format(CultureInfo.CurrentCulture, "This subscription is missing the capability {0} and therefore does not support a change cluster size operation.", HDInsightClient.ClustersContractCapabilityVersion2));
-            }
-
             try
             {
                 var clusterResult = string.IsNullOrEmpty(location) ? await this.GetCluster(dnsName) : await this.GetCluster(dnsName, location);
                 var cloudServiceName = this.GetCloudServiceName(clusterResult.ClusterDetails.Location);
 
                 var cluster = clusterResult.ResultOfGetClusterCall;
+
+                SchemaVersionUtils.EnsureSchemaVersionSupportsResize(this.capabilities);
 
                 if (cluster.ClusterCapabilities == null || 
                     !cluster.ClusterCapabilities.Contains(ResizeCapabilityEnabled, StringComparer.OrdinalIgnoreCase))
@@ -479,30 +531,6 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
             }
         }
 
-        internal static string GetSchemaVersion(List<string> capabilities)
-        {
-            if (capabilities == null)
-            {
-                throw new ArgumentNullException("capabilities");
-            }
-
-            List<Match> matches = capabilities.Select(s => ClustersContractCapabilityRegex.Match(s)).Where(match => match.Success).ToList();
-            if (matches.Count == 0)
-            {
-                throw new NotSupportedException(
-                    string.Format(CultureInfo.CurrentCulture, "This subscription is not enabled for the clusters contract. The capability {0} is missing.", HDInsightClient.ClustersContractCapabilityVersion1));
-            }
-
-            var schemaVersions = matches.Select(m => int.Parse(m.Groups[1].Value, CultureInfo.CurrentCulture)).ToList();
-
-            if (!schemaVersions.Any())
-            {
-                throw new NotSupportedException(
-                    string.Format(CultureInfo.CurrentCulture, "This subscription is not enabled for the clusters contract. The capability {0} is missing.", HDInsightClient.ClustersContractCapabilityVersion1));
-            }
-
-            return string.Format(CultureInfo.CurrentCulture, "{0}.0", schemaVersions.Max());
-        }
 
         public Task<Guid> EnableDisableProtocol(
             UserChangeRequestUserType protocol,
@@ -959,6 +987,5 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
         }
 
         public ILogger Logger { get; private set; }
-
     }
 }
