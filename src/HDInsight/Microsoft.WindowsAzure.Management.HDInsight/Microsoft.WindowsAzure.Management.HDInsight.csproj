@@ -36,6 +36,7 @@
     <Compile Include="ApplicationHistoryAndLogs\IHDInsightApplicationHistoryClient.cs" />
     <Compile Include="ApplicationHistoryAndLogs\IHDInsightApplicationHistorySyncClient.cs" />
     <Compile Include="ClusterNodeType.cs" />
+    <Compile Include="ClusterProvisioning\Data\ClusterCreateParametersV2.cs" />
     <Compile Include="ClusterProvisioning\Data\ClusterType.cs" />
     <Compile Include="ClusterProvisioning\Data\DocumentTemplates\VersionToDocumentMapper.cs" />
     <Compile Include="ClusterProvisioning\Data\HBaseConfiguration.cs" />
@@ -68,6 +69,9 @@
     <Compile Include="ClusterProvisioning\PocoClient\IaasClusters\IaasClustersPocoClient.cs" />
     <Compile Include="ClusterProvisioning\PocoClient\PaasClusters\PaasClustersPocoClient.cs" />
     <Compile Include="ClusterProvisioning\PocoClient\PaasClusters\Extensions\WabStorageAccountConfigurationExtensions.cs" />
+    <Compile Include="ClusterProvisioning\PocoClient\ClustersResource\ClustersPocoClient.cs" />
+    <Compile Include="ClusterProvisioning\PocoClient\ClustersResource\Extensions\WabStorageAccountConfigurationExtensions.cs" />
+    <Compile Include="ClusterProvisioning\PocoClient\SchemaVersionUtils.cs" />
     <Compile Include="ClusterProvisioning\PocoClient\UriEndpointValidator.cs" />
     <Compile Include="ClusterProvisioning\ResourceTypeFinder\IRdfeResourceTypeFinderFactory.cs" />
     <Compile Include="ClusterProvisioning\ResourceTypeFinder\IRdfeResourceTypeFinderClient.cs" />

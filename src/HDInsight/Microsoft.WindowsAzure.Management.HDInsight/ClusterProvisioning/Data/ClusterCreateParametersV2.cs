@@ -12,6 +12,9 @@
 // 
 // See the Apache Version 2.0 License for specific language governing
 // permissions and limitations under the License.
+
+using Microsoft.WindowsAzure.Management.HDInsight.Contracts.May2014;
+
 namespace Microsoft.WindowsAzure.Management.HDInsight
 {
     using System;
@@ -21,7 +24,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
     /// <summary>
     /// Object that encapsulates all the properties of a List Request.
     /// </summary>
-    public sealed class ClusterCreateParameters
+    public sealed class ClusterCreateParametersV2
     {
         /// <summary>
         /// Gets or sets the Name of the cluster.
@@ -80,7 +83,23 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
         /// <value>
         /// The size of the head node.
         /// </value>
-        public NodeVMSize HeadNodeSize { get; set; }
+        public string HeadNodeSize { get; set; }
+
+        /// <summary>
+        /// Gets or sets the size of the Data Node.
+        /// </summary>
+        /// <value>
+        /// The size of the data node.
+        /// </value>
+        public string DataNodeSize { get; set; }
+
+        /// <summary>
+        /// Gets or sets the size of the Zookeeper Node.
+        /// </summary>
+        /// <value>
+        /// The size of the zookeeper node.
+        /// </value>
+        public string ZookeeperNodeSize { get; set; }
 
         /// <summary>
         /// Gets additional Azure Storage Account that you want to enable access to.
@@ -143,6 +162,11 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
         public ConfigValuesCollection StormConfiguration { get; private set; }
 
         /// <summary>
+        /// Gets the Spark service configuration of this HDInsight cluster.
+        /// </summary>
+        public ConfigValuesCollection SparkConfiguration { get; private set; }
+
+        /// <summary>
         /// Gets or sets the flavor for a cluster.
         /// </summary>
         public ClusterType ClusterType { get; set; }
@@ -163,9 +187,29 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
         public string SubnetName { get; set; }
 
         /// <summary>
+        /// Gets or sets the type of operating system installed on cluster nodes.
+        /// </summary>
+        public OSType OSType { get; set; }
+
+        /// <summary>
+        /// Gets or sets SSH user name.
+        /// </summary>
+        public string SshUserName { get; set; }
+
+        /// <summary>
+        /// Gets or sets SSH password.
+        /// </summary>
+        public string SshPassword { get; set; }
+
+        /// <summary>
+        /// Gets or sets the public key to be used for SSH.
+        /// </summary>
+        public string SshPublicKey { get; set; }
+
+        /// <summary>
         /// Initializes a new instance of the ClusterCreateParameters class.
         /// </summary>
-        public ClusterCreateParameters()
+        public ClusterCreateParametersV2()
         {
             this.CreateTimeout = TimeSpan.FromHours(2);
             this.AdditionalStorageAccounts = new Collection<WabStorageAccountConfiguration>();
@@ -178,13 +222,94 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
             this.YarnConfiguration = new ConfigValuesCollection();
             this.HBaseConfiguration = new HBaseConfiguration();
             this.StormConfiguration = new ConfigValuesCollection();
-            
-            // By default create hadoop only cluster unless set otherwise
-            this.ClusterType = ClusterType.Hadoop; 
-            this.HeadNodeSize = NodeVMSize.Default;
+            this.SparkConfiguration = new ConfigValuesCollection();
 
-            // By default choose Windows
-            this.OSType = HDInsight.OSType.Windows;
+            // By default create hadoop only cluster unless set otherwise
+            this.ClusterType = ClusterType.Hadoop;
+            this.HeadNodeSize = VmSize.Large.ToString();
+            this.DataNodeSize = VmSize.Large.ToString();
+            this.ZookeeperNodeSize = null;
+        }
+
+        public ClusterCreateParametersV2(ClusterCreateParameters versionOneParams) : this()
+        {
+            this.Name = versionOneParams.Name;
+            this.Location = versionOneParams.Location;
+            this.DefaultStorageAccountName = versionOneParams.DefaultStorageAccountName;
+            this.DefaultStorageAccountKey = versionOneParams.DefaultStorageAccountKey;
+            this.DefaultStorageContainer = versionOneParams.DefaultStorageContainer;
+            this.UserName = versionOneParams.UserName;
+            this.Password = versionOneParams.Password;
+            this.ClusterSizeInNodes = versionOneParams.ClusterSizeInNodes;
+            this.Version = versionOneParams.Version;
+            
+            //headnode can be default, setting real value in CCPV2
+            this.HeadNodeSize = versionOneParams.HeadNodeSize != NodeVMSize.Default
+                ? versionOneParams.HeadNodeSize.ToString()
+                : NodeVMSize.Large.ToString(); 
+
+            this.AdditionalStorageAccounts = versionOneParams.AdditionalStorageAccounts;
+            this.ConfigActions = versionOneParams.ConfigActions;
+            this.OozieMetastore = versionOneParams.OozieMetastore;
+            this.HiveMetastore = versionOneParams.HiveMetastore;
+            this.CoreConfiguration = versionOneParams.CoreConfiguration;
+            this.HdfsConfiguration = versionOneParams.HdfsConfiguration;
+            this.MapReduceConfiguration = versionOneParams.MapReduceConfiguration;
+            this.HiveConfiguration = versionOneParams.HiveConfiguration;
+            this.OozieConfiguration = versionOneParams.OozieConfiguration;
+            this.YarnConfiguration = versionOneParams.YarnConfiguration;
+            this.HBaseConfiguration = versionOneParams.HBaseConfiguration;
+            this.StormConfiguration = versionOneParams.StormConfiguration;
+            this.ClusterType = versionOneParams.ClusterType;
+            this.CreateTimeout = versionOneParams.CreateTimeout;
+            this.VirtualNetworkId = versionOneParams.VirtualNetworkId;
+            this.SubnetName = versionOneParams.SubnetName;
+
+            //new parameters in version 2 (default values)
+            this.DataNodeSize = VmSize.Large.ToString();
+            this.ZookeeperNodeSize = null;
+        }
+
+        /// <summary>
+        /// Performs parameter validations
+        /// </summary>
+        internal void ValidateClusterCreateParameters()
+        {
+            // if OSType == Linux then Username must be "admin"
+            if (this.OSType == HDInsight.OSType.Linux && this.UserName != "admin")
+            {
+                throw new NotSupportedException(string.Format("For clusters with OSType {0}, cluster' connectivity username must be admin.", this.OSType));
+            }
+
+            // if OSType == Linux then ClusterType must be Hadoop
+            if (this.OSType == HDInsight.OSType.Linux && this.ClusterType != ClusterType.Hadoop)
+            {
+                throw new NotSupportedException(string.Format("For clusters with OSType {0}, cluster' type must be {1}.", this.OSType, ClusterType.Hadoop));
+            }
+
+            // if OSType == Linux then VirtualNetworkId must not be set/specified
+            if (this.OSType == HDInsight.OSType.Linux && !String.IsNullOrEmpty(this.VirtualNetworkId))
+            {
+                throw new NotSupportedException(string.Format("For clusters with OSType {0}, setting virtual network Id is not supported.", this.OSType));
+            }
+
+            // if OSType == Linux then SubnetName must not be set/specified
+            if (this.OSType == HDInsight.OSType.Linux && !String.IsNullOrEmpty(this.SubnetName))
+            {
+                throw new NotSupportedException(string.Format("For clusters with OSType {0}, setting subnet name is not supported.", this.OSType));
+            }
+
+            // if OSType == Windows then SSH credentials must not be specified
+            if (this.OSType == HDInsight.OSType.Windows && !String.IsNullOrEmpty(this.SshUserName))
+            {
+                throw new NotSupportedException(string.Format("SSH is not supported for clusters with OSType {0}", this.OSType));
+            }
+
+            // if SSH user name is specified then either SSH password or SSH public key must be specified
+            if (!String.IsNullOrEmpty(this.SshUserName) && String.IsNullOrEmpty(this.SshPassword) && String.IsNullOrEmpty(this.SshPublicKey))
+            {
+                throw new InvalidOperationException("For SSH connectivity, either a password or a public key is required. If a password is specified, the public key will be ignored.");
+            }
         }
     }
 }
