@@ -15,7 +15,7 @@
 
 using Microsoft.WindowsAzure.Management.HDInsight.Framework.Core.Library;
 
-namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoClient.ClustersResource
+namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoClient.PaasClusters
 {
     using System;
     using System.Collections;
@@ -38,7 +38,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
     using Microsoft.WindowsAzure.Management.HDInsight.Framework.ServiceLocation;
     using Microsoft.WindowsAzure.Management.HDInsight.Logging;
 
-    internal class ClustersPocoClient : IHDInsightManagementPocoClient
+    internal class PaasClustersPocoClient : IHDInsightManagementPocoClient
     {
         private readonly IRdfeClustersResourceRestClient rdfeClustersRestClient;
         private readonly IHDInsightSubscriptionCredentials credentials;
@@ -65,12 +65,12 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
             this.OnClusterProvisioning(e);
         }
 
-        internal ClustersPocoClient(IHDInsightSubscriptionCredentials credentials, bool ignoreSslErrors, IAbstractionContext context, List<string> capabilities)
+        internal PaasClustersPocoClient(IHDInsightSubscriptionCredentials credentials, bool ignoreSslErrors, IAbstractionContext context, List<string> capabilities)
             : this(credentials, ignoreSslErrors, context, capabilities, ServiceLocator.Instance.Locate<IRdfeClustersResourceRestClientFactory>().Create(credentials, context, ignoreSslErrors, SchemaVersionUtils.GetSchemaVersion(capabilities)))
         {
         }
 
-        internal ClustersPocoClient(
+        internal PaasClustersPocoClient(
             IHDInsightSubscriptionCredentials credentials,
             bool ignoreSslErrors,
             IAbstractionContext context,
@@ -104,7 +104,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
             this.rdfeClustersRestClient = clustersResourceRestClient;
             this.capabilities = capabilities;
         }
-        
+
         protected virtual void OnClusterProvisioning(ClusterProvisioningStatusEventArgs e)
         {
             var handler = this.ClusterProvisioning;
@@ -249,7 +249,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
                         clusterCreateParameters.ClusterType));
                 }
             }
-            
+
             try
             {
                 //Validate 
@@ -274,7 +274,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
 
                 //Validate if new vm sizes are used and if the schema is on.
                 if (CreateHasNewVMSizesSpecified(clusterCreateParameters) &&
-                    !ClustersPocoClient.HasCorrectSchemaVersionForNewVMSizes(this.capabilities))
+                    !HasCorrectSchemaVersionForNewVMSizes(this.capabilities))
                 {
                     throw new NotSupportedException("Your subscription does not support new VM sizes.");
                 }
@@ -415,7 +415,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
                             this.GetCloudServiceName(service.GeoRegion),
                             this.credentials.DeploymentNamespace,
                             dnsName,
-                            this.Context.CancellationToken);                    
+                            this.Context.CancellationToken);
                 }
             }
             catch (InvalidExpectedStatusCodeException iEx)
@@ -468,7 +468,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
             {
                 throw new ArgumentNullException("dnsName", "The dns name cannot be null or empty.");
             }
-            
+
             if (newSize < 1)
             {
                 throw new ArgumentOutOfRangeException("newSize", "The new node count must be at least 1.");
@@ -483,7 +483,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
 
                 SchemaVersionUtils.EnsureSchemaVersionSupportsResize(this.capabilities);
 
-                if (cluster.ClusterCapabilities == null || 
+                if (cluster.ClusterCapabilities == null ||
                     !cluster.ClusterCapabilities.Contains(ResizeCapabilityEnabled, StringComparer.OrdinalIgnoreCase))
                 {
                     throw new NotSupportedException(
@@ -721,7 +721,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoCl
 
             return new GetClusterResult(clusterDetails, clusterFromGetClusterCall);
         }
-        
+
         private async Task<GetClusterResult> GetCluster(string dnsName)
         {
             var cloudServices = await this.ListCloudServices();
