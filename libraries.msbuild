@@ -18,6 +18,10 @@
     <ManagementLibrariesProjects Include="$(ProductSourceFolder)\$(MamlProjectName)\*.csproj" Condition="$(MamlProjectName) != ''" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <SDKNuGetPackageVersion>1.5.0</SDKNuGetPackageVersion>
+  </PropertyGroup>
+
   <!-- Developer-specific properties -->
   <Import Project="developer\$(USERNAME)\build.props" Condition="Exists('developer\$(USERNAME)\build.props')" />
 
@@ -580,6 +584,6 @@
                           A future nice-to-have might be to burn the associated
                           NuGet semver for each assembly along with the build
                           information, but this would require refactoring the
-                          build item groups. -->
+                          build item groups.-->
   </Target>
 </Project>

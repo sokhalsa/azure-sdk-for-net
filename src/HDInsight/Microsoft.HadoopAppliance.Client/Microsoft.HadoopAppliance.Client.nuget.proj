@@ -5,8 +5,8 @@
     Microsoft.WindowsAzure.Management.HDInsight
     -->
     <SdkNuGetPackage Include="Microsoft.HadoopAppliance.Client">
-      <PackageVersion>1.5.0</PackageVersion>
       <Folder>$(MSBuildThisFileDirectory)</Folder>
+      <PackageVersion>$(SDKNuGetPackageVersion)</PackageVersion>
     </SdkNuGetPackage>
   </ItemGroup>
 </Project>
