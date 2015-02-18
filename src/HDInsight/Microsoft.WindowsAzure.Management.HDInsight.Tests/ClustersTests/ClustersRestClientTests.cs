@@ -3,7 +3,7 @@
 namespace Microsoft.WindowsAzure.Management.HDInsight.Tests.ClustersTests
 {
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoClient.ClustersResource;
+    using Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.PocoClient.PaasClusters;
     using Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.RestClient.ClustersResource;
     using Microsoft.WindowsAzure.Management.HDInsight.Framework.ServiceLocation;
 

@@ -19,6 +19,7 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
 {
     using System;
     using System.Collections.ObjectModel;
+    using System.Linq;
     using Microsoft.WindowsAzure.Management.HDInsight.ClusterProvisioning.Data;
 
     /// <summary>
@@ -187,6 +188,26 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
         public string SubnetName { get; set; }
 
         /// <summary>
+        /// Gets or sets the type of operating system installed on cluster nodes.
+        /// </summary>
+        public OSType OSType { get; set; }
+
+        /// <summary>
+        /// Gets or sets SSH user name.
+        /// </summary>
+        public string SshUserName { get; set; }
+
+        /// <summary>
+        /// Gets or sets SSH password.
+        /// </summary>
+        public string SshPassword { get; set; }
+
+        /// <summary>
+        /// Gets or sets the public key to be used for SSH.
+        /// </summary>
+        public string SshPublicKey { get; set; }
+
+        /// <summary>
         /// Initializes a new instance of the ClusterCreateParameters class.
         /// </summary>
         public ClusterCreateParametersV2()
@@ -209,6 +230,9 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
             this.HeadNodeSize = VmSize.Large.ToString();
             this.DataNodeSize = VmSize.Large.ToString();
             this.ZookeeperNodeSize = null;
+
+            // By default create Windows clusters
+            this.OSType = HDInsight.OSType.Windows;
         }
 
         public ClusterCreateParametersV2(ClusterCreateParameters versionOneParams) : this()
@@ -248,6 +272,71 @@ namespace Microsoft.WindowsAzure.Management.HDInsight
             //new parameters in version 2 (default values)
             this.DataNodeSize = VmSize.Large.ToString();
             this.ZookeeperNodeSize = null;
+
+            // By default create Windows clusters
+            this.OSType = HDInsight.OSType.Windows;
+        }
+
+        /// <summary>
+        /// Performs parameter validations
+        /// </summary>
+        internal void ValidateClusterCreateParameters()
+        {
+            // if OSType == Linux then Username must be "admin"
+            if (this.OSType == HDInsight.OSType.Linux && this.UserName != "admin")
+            {
+                throw new NotSupportedException(string.Format("For clusters with OSType {0}, cluster' connectivity username must be admin.", this.OSType));
+            }
+
+            // if OSType == Linux then ClusterType must be Hadoop
+            if (this.OSType == HDInsight.OSType.Linux && this.ClusterType != ClusterType.Hadoop)
+            {
+                throw new NotSupportedException(string.Format("For clusters with OSType {0}, cluster' type must be {1}.", this.OSType, ClusterType.Hadoop));
+            }
+
+            // if OSType == Linux then VirtualNetworkId must not be set/specified
+            if (this.OSType == HDInsight.OSType.Linux && !String.IsNullOrEmpty(this.VirtualNetworkId))
+            {
+                throw new NotSupportedException(string.Format("For clusters with OSType {0}, setting virtual network Id is not supported.", this.OSType));
+            }
+
+            // if OSType == Linux then SubnetName must not be set/specified
+            if (this.OSType == HDInsight.OSType.Linux && !String.IsNullOrEmpty(this.SubnetName))
+            {
+                throw new NotSupportedException(string.Format("For clusters with OSType {0}, setting subnet name is not supported.", this.OSType));
+            }
+
+            // if OSType == Windows then SSH credentials must not be specified
+            if (this.OSType == HDInsight.OSType.Windows && !String.IsNullOrEmpty(this.SshUserName))
+            {
+                throw new NotSupportedException(string.Format("SSH is not supported for clusters with OSType {0}", this.OSType));
+            }
+
+            // if SSH user name is specified then either SSH password or SSH public key must be specified
+            if (!String.IsNullOrEmpty(this.SshUserName) && String.IsNullOrEmpty(this.SshPassword) && String.IsNullOrEmpty(this.SshPublicKey))
+            {
+                throw new InvalidOperationException("For SSH connectivity, either a password or a public key is required. If a password is specified, the public key will be ignored.");
+            }
+
+            // Allowable values for HeadNodeSize are { Large, ExtraLarge }
+            var allowedValuesForHeadNodeSize = new String[] { NodeVMSize.Large.ToString(), NodeVMSize.ExtraLarge.ToString() };
+            if (!allowedValuesForHeadNodeSize.Contains(HeadNodeSize))
+            {
+                throw new InvalidOperationException(String.Format("Allowed values for Head Node Size are: {0}", String.Join(",", allowedValuesForHeadNodeSize)));
+            }
+
+            // If OSType == Linux, allowable values for DataNodeSize are { Large }
+            var allowedValuesForDataNodeSize = new String[] { NodeVMSize.Large.ToString() };
+            if (this.OSType == HDInsight.OSType.Linux && !allowedValuesForDataNodeSize.Contains(DataNodeSize))
+            {
+                throw new InvalidOperationException(String.Format("Data Node size is not configurable for clusters with OS Type {0}. Allowed values for Data Node Size are: {1}", this.OSType, String.Join(",", allowedValuesForHeadNodeSize)));
+            }
+
+            // If OSType == Linux, Zookeeper node size must not be set
+            if (this.OSType == HDInsight.OSType.Linux && !String.IsNullOrEmpty(ZookeeperNodeSize))
+            {
+                throw new InvalidOperationException(String.Format("Zookeeper node size is not configurable and must not be set for clusters with OS Type {0}.", this.OSType));
+            }
         }
     }
 }

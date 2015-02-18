@@ -33,6 +33,9 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
+    <Compile Include="..\SharedAssemblyInfo.cs">
+      <Link>Properties\SharedAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="ApplianceTests\HadoopApplianceStorageClientTests.cs" />
     <Compile Include="ClientAbstractionTests\AsvValidatorClientTests.cs" />
     <Compile Include="ClientAbstractionTests\HttpRetryTests.cs" />
