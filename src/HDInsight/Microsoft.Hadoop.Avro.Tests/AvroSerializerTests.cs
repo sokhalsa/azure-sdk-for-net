@@ -1241,6 +1241,38 @@ namespace Microsoft.Hadoop.Avro.Tests
             RoundTripSerializationWithCheck(expected);
         }
 
+        [TestMethod]
+        [TestCategory("CheckIn")]
+        public void Serializer_SerializeClassWithGenericMemberHavingMultipleMatchingKnownTypes()
+        {
+            var expected = IEnumerableClass<string>.Create(new List<string> { "aaa", "bbb", "ccc" });
+
+            Type type = expected.GetType();
+            Type[] typeArguments = type.GetGenericArguments();
+
+            var settings = new AvroSerializerSettings
+            {
+                Resolver = new AvroDataContractResolver(),
+                KnownTypes = new List<Type>
+                {
+                    typeof(List<>).MakeGenericType(typeArguments),
+                    typeArguments[0].MakeArrayType()
+                }
+            };
+
+            var serializer = AvroSerializer.Create<IEnumerableClass<string>>(settings);
+            var deserializer = AvroSerializer.CreateDeserializerOnly<IEnumerableClass<string>>(serializer.WriterSchema.ToString(), settings);
+
+            using (var stream = new MemoryStream())
+            {
+                serializer.Serialize(stream, expected);
+                stream.Seek(0, SeekOrigin.Begin);
+                var actual = deserializer.Deserialize(stream);
+
+                Assert.AreEqual(expected, actual);
+            }
+        }
+
         #endregion //Nullables tests
 
         #region NullableSchema tests

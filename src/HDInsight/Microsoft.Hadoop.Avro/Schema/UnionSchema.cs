@@ -17,6 +17,7 @@ namespace Microsoft.Hadoop.Avro.Schema
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Linq;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -69,7 +70,11 @@ namespace Microsoft.Hadoop.Avro.Schema
         internal override void ToJsonSafe(JsonTextWriter writer, HashSet<NamedSchema> seenSchemas)
         {
             writer.WriteStartArray();
-            this.schemas.ForEach(_ => _.ToJson(writer, seenSchemas));
+            this.schemas
+                .GroupBy(x => x.Type)
+                .Select(y => y.First())
+                .ToList()
+                .ForEach(_ => _.ToJson(writer, seenSchemas));
             writer.WriteEndArray();
         }
 
